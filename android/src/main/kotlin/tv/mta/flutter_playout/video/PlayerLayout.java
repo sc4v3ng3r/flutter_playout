@@ -93,7 +93,7 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
 
     private BinaryMessenger messenger;
 
-    private String url = "";
+    private Uri url = Uri.EMPTY;
 
     private String title = "";
 
@@ -160,7 +160,7 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
 
             JSONObject args = (JSONObject) arguments;
 
-            this.url = args.getString("url");
+            this.url =  Uri.parse( args.getString("url") ) ;
 
             this.title = args.getString("title");
 
@@ -481,10 +481,13 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
          * Check for HLS playlist file extension ( .m3u8 or .m3u )
          * https://tools.ietf.org/html/rfc8216
          */
-        if(this.url.endsWith(".m3u8") || this.url.endsWith("m3u")) {
-            videoSource = new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(this.url));
+
+        String path = this.url.getPath();
+
+        if(path.endsWith(".m3u8") || path.endsWith("m3u")) {
+            videoSource = new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(this.url);
         } else {
-            videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(this.url));
+            videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(this.url);
         }
 
         mPlayerView.prepare(videoSource);
@@ -496,7 +499,7 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
 
             java.util.HashMap<String, String> args = (java.util.HashMap<String, String>) arguments;
 
-            this.url = args.get("url");
+            this.url = Uri.parse( args.get("url") );
 
             this.title = args.get("title");
 
