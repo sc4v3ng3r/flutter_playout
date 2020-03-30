@@ -93,7 +93,7 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
 
     private BinaryMessenger messenger;
 
-    private Uri url = Uri.EMPTY;
+    private String url = "";
 
     private String title = "";
 
@@ -160,7 +160,7 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
 
             JSONObject args = (JSONObject) arguments;
 
-            this.url =  Uri.parse( args.getString("url") ) ;
+            this.url =  args.getString("url");
 
             this.title = args.getString("title");
 
@@ -482,12 +482,13 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
          * https://tools.ietf.org/html/rfc8216
          */
 
-        String path = this.url.getPath();
+        Uri uri = Uri.parse(url);
+        String path = uri.getPath();
 
-        if(path.endsWith(".m3u8") || path.endsWith("m3u")) {
-            videoSource = new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(this.url);
+        if( (path != null) && (path.endsWith(".m3u8") || path.endsWith("m3u")) ) {
+            videoSource = new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
         } else {
-            videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(this.url);
+            videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
         }
 
         mPlayerView.prepare(videoSource);
@@ -496,10 +497,8 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
     public void onMediaChanged(Object arguments) {
 
         try {
-
             java.util.HashMap<String, String> args = (java.util.HashMap<String, String>) arguments;
-
-            this.url = Uri.parse( args.get("url") );
+            this.url = args.get("url");
 
             this.title = args.get("title");
 
