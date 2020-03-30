@@ -71,6 +71,7 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
     var subtitle:String = ""
     var isLiveStream:Bool = false
     var showControls:Bool = false
+    var position:Double = -1
 
     private var mediaDuration = 0.0
     
@@ -118,6 +119,7 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
         self.subtitle = parsedData["subtitle"] as! String
         self.isLiveStream = parsedData["isLiveStream"] as! Bool
         self.showControls = parsedData["showControls"] as! Bool
+        self.position = parsedData["position"] as! Double
         
         setupPlayer()
     }
@@ -139,11 +141,12 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
         nativeMethodsChannel.setMethodCallHandler({
             (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
             
+            
+            
             if ("onMediaChanged" == call.method) {
                 
                 /* data as JSON */
                 let parsedData = call.arguments as! [String: Any]
-
                 /* set incoming player properties */
                 self.url = parsedData["url"] as! String
                 self.autoPlay = parsedData["autoPlay"] as! Bool
@@ -151,12 +154,20 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
                 self.subtitle = parsedData["subtitle"] as! String
                 self.isLiveStream = parsedData["isLiveStream"] as! Bool
                 self.showControls = parsedData["showControls"] as! Bool
+                self.position = parsedData["position"] as! Double
 
                 self.onMediaChanged()
                 
                 result(true)
             }
                 
+            if ("seekTo" == call.method){
+                /* data as JSON */
+                let parsedData = call.arguments as! [String: Any]
+                self.position = parsedData["position"] as! Double
+                self.onPositionChange();
+            }
+            
             if ("onShowControlsFlagChanged" == call.method) {
                 
                 /* data as JSON */
@@ -171,6 +182,7 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
             }
                 
             else if ("resume" == call.method) {
+
                 self.play()
             }
                 
@@ -246,6 +258,7 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
             self.playerViewController?.player = self.player
             self.playerViewController?.view.frame = self.frame
             self.playerViewController?.showsPlaybackControls = self.showControls
+            
             /* setup lock screen controls */
             setupRemoteTransportControls()
             
@@ -479,6 +492,8 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
         
         player?.play()
         
+        onPositionChange()
+        
         updateInfoPanelOnPlay()
         
         onDurationChange()
@@ -487,6 +502,8 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
     private func pause() {
         
         player?.pause()
+        
+        onPositionChange()
         
         updateInfoPanelOnPause()
         
@@ -515,6 +532,14 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
         flutterEventSink = nil
         self.player?.flutterEventSink = nil
         return nil
+    }
+    
+    private func onPositionChange() {
+        if (self.position > 0){
+            guard let player = self.player else { return }
+            let seconds = self.position / 1000
+            player.seek(to: CMTime(seconds: seconds, preferredTimescale: CMTimeScale(NSEC_PER_SEC)))
+        }
     }
     
     private func onDurationChange() {
