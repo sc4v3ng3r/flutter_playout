@@ -166,6 +166,7 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
                 let parsedData = call.arguments as! [String: Any]
                 self.position = parsedData["position"] as! Double
                 self.onPositionChange();
+                result(true)
             }
             
             if ("onShowControlsFlagChanged" == call.method) {
@@ -300,7 +301,7 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
                 let playerItem = AVPlayerItem(asset: asset, automaticallyLoadedAssetKeys: requiredAssetKeys)
                 
                 p.replaceCurrentItem(with: playerItem)
-                
+                self.onPositionChange();
                 /* setup lock screen controls */
                 setupRemoteTransportControls()
                 setupNowPlayingInfoPanel()
@@ -492,8 +493,6 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
         
         player?.play()
         
-        onPositionChange()
-        
         updateInfoPanelOnPlay()
         
         onDurationChange()
@@ -502,8 +501,6 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
     private func pause() {
         
         player?.pause()
-        
-        onPositionChange()
         
         updateInfoPanelOnPause()
         
