@@ -205,84 +205,105 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
     }
     
     func setupPlayer(){
+        
         if let videoURL = URL(string: self.url.trimmingCharacters(in: .whitespacesAndNewlines)) {
-            
-            do {
-                let audioSession = AVAudioSession.sharedInstance()
-                try audioSession.setCategory(AVAudioSession.Category.playback, options: AVAudioSession.CategoryOptions.allowBluetooth)
-                try audioSession.setActive(true)
-            } catch _ { }
-            
-            /* Create the asset to play */
-            let asset = AVAsset(url: videoURL)
-            
-            /* not a valid playback asset */
-            if (!asset.isPlayable) {
-                return
-            }
-
-            /* Create a new AVPlayerItem with the asset and
-             an array of asset keys to be automatically loaded */
-            let playerItem = AVPlayerItem(asset: asset,
-                                      automaticallyLoadedAssetKeys: requiredAssetKeys)
-            
-            let center = NotificationCenter.default
-            
-            center.addObserver(self, selector: #selector(onComplete(_:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: self.player?.currentItem)
-            center.addObserver(self, selector:#selector(onAVPlayerNewErrorLogEntry(_:)), name: .AVPlayerItemNewErrorLogEntry, object: player?.currentItem)
-            center.addObserver(self, selector:#selector(onAVPlayerFailedToPlayToEndTime(_:)), name: .AVPlayerItemFailedToPlayToEndTime, object: player?.currentItem)
-            
-            /* setup player */
-            self.player = FluterAVPlayer(playerItem: playerItem)
-            
-            if #available(iOS 12.0, *) {
-                self.player?.preventsDisplaySleepDuringVideoPlayback = true
-            }
-            
-            /* Add observer for AVPlayer status and AVPlayerItem status */
-            self.player?.addObserver(self, forKeyPath: #keyPath(AVPlayer.status), options: [.new, .initial], context: nil)
-            self.player?.addObserver(self, forKeyPath: #keyPath(AVPlayerItem.status), options:[.old, .new, .initial], context: nil)
-            self.player?.addObserver(self, forKeyPath: #keyPath(AVPlayer.timeControlStatus), options:[.old, .new, .initial], context: nil)
-                    
-            /* setup callback for onTime */
-            let interval = CMTime(seconds: 1.0, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-            timeObserverToken = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) {
-                time in self.onTimeInterval(time: time)
-            }
-            
-            /* setup player view controller */
-            self.playerViewController = AVPlayerViewController()
-            if #available(iOS 10.0, *) {
-                self.playerViewController?.updatesNowPlayingInfoCenter = false
-            }
-            
-            self.playerViewController?.player = self.player
-            self.playerViewController?.view.frame = self.frame
-            self.playerViewController?.showsPlaybackControls = self.showControls
-            
-            /* setup lock screen controls */
-            setupRemoteTransportControls()
-            
-            setupNowPlayingInfoPanel()
-           
-            /* start playback if svet to auto play */
-            if (self.autoPlay) {
-                play()
-            }
-            
-            /* add player view controller to root view controller */
-            let viewController = (UIApplication.shared.delegate?.window??.rootViewController)!
-            viewController.addChild(self.playerViewController!)
-            
+            startPlayer(resourceUrl: videoURL)
+            return
+        } // end remote startup
+        
+        let localURL = URL(fileURLWithPath: self.url.trimmingCharacters(in: .whitespacesAndNewlines))
+        
+        if (localURL.isFileURL){
+            startPlayer(resourceUrl: localURL)
+            return
         }
+        
+        print("Petulancia do cavalo")
+        
+    }
+    
+    private func startPlayer(resourceUrl videoURL: URL) {
+        do {
+             let audioSession = AVAudioSession.sharedInstance()
+             try audioSession.setCategory(AVAudioSession.Category.playback, options: AVAudioSession.CategoryOptions.allowBluetooth)
+             try audioSession.setActive(true)
+         } catch _ { }
+         
+         /* Create the asset to play */
+         let asset = AVAsset(url: videoURL)
+         
+         /* not a valid playback asset */
+         if (!asset.isPlayable) {
+             return
+         }
+
+         /* Create a new AVPlayerItem with the asset and
+          an array of asset keys to be automatically loaded */
+         let playerItem = AVPlayerItem(asset: asset,
+                                   automaticallyLoadedAssetKeys: requiredAssetKeys)
+         
+         let center = NotificationCenter.default
+         
+         center.addObserver(self, selector: #selector(onComplete(_:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: self.player?.currentItem)
+         
+         center.addObserver(self, selector:#selector(onAVPlayerNewErrorLogEntry(_:)), name: .AVPlayerItemNewErrorLogEntry, object: player?.currentItem)
+         
+         center.addObserver(self, selector:#selector(onAVPlayerFailedToPlayToEndTime(_:)), name: .AVPlayerItemFailedToPlayToEndTime, object: player?.currentItem)
+         
+         /* setup player */
+         self.player = FluterAVPlayer(playerItem: playerItem)
+         
+         if #available(iOS 12.0, *) {
+             self.player?.preventsDisplaySleepDuringVideoPlayback = true
+         }
+         
+         /* Add observer for AVPlayer status and AVPlayerItem status */
+         self.player?.addObserver(self, forKeyPath: #keyPath(AVPlayer.status), options: [.new, .initial], context: nil)
+         self.player?.addObserver(self, forKeyPath: #keyPath(AVPlayerItem.status), options:[.old, .new, .initial], context: nil)
+         self.player?.addObserver(self, forKeyPath: #keyPath(AVPlayer.timeControlStatus), options:[.old, .new, .initial], context: nil)
+                 
+         /* setup callback for onTime */
+         let interval = CMTime(seconds: 1.0, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
+         timeObserverToken = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) {
+             time in self.onTimeInterval(time: time)
+         }
+         
+         /* setup player view controller */
+         self.playerViewController = AVPlayerViewController()
+         if #available(iOS 10.0, *) {
+             self.playerViewController?.updatesNowPlayingInfoCenter = false
+         }
+         
+         self.playerViewController?.player = self.player
+         self.playerViewController?.view.frame = self.frame
+         self.playerViewController?.showsPlaybackControls = self.showControls
+         
+         /* setup lock screen controls */
+         setupRemoteTransportControls()
+         
+         setupNowPlayingInfoPanel()
+        
+         /* start playback if svet to auto play */
+         if (self.autoPlay) {
+             play()
+         }
+         
+         /* add player view controller to root view controller */
+         let viewController = (UIApplication.shared.delegate?.window??.rootViewController)!
+         viewController.addChild(self.playerViewController!)
+         
     }
     
     /* create player view */
     func view() -> UIView {
         
         if let videoURL = URL(string: self.url.trimmingCharacters(in: .whitespacesAndNewlines)) {
-            
-            
+            return self.playerViewController!.view
+        }
+        
+        let localURL = URL(fileURLWithPath: self.url.trimmingCharacters(in: .whitespacesAndNewlines))
+        
+        if (localURL.isFileURL){
             return self.playerViewController!.view
         }
         
@@ -291,22 +312,30 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
     }
     
     private func onMediaChanged() {
-        if let p = self.player {
-            
-            if let videoURL = URL(string: self.url) {
-                
-                /* create the new asset to play */
-                let asset = AVAsset(url: videoURL)
-                
-                let playerItem = AVPlayerItem(asset: asset, automaticallyLoadedAssetKeys: requiredAssetKeys)
-                
-                p.replaceCurrentItem(with: playerItem)
-                self.onPositionChange();
-                /* setup lock screen controls */
-                setupRemoteTransportControls()
-                setupNowPlayingInfoPanel()
-            }
+        if let videoURL = URL(string: self.url) {
+            updateMedia(resourceUrl: videoURL)
+            return
         }
+        
+        let localURL = URL(fileURLWithPath: self.url)
+        
+        if (localURL.isFileURL){
+            updateMedia(resourceUrl: localURL)
+        }
+    }
+    
+    private func updateMedia(resourceUrl videoURL: URL) {
+        if let p = self.player {
+            /* create the new asset to play */
+            let asset = AVAsset(url: videoURL)
+            let playerItem = AVPlayerItem(asset: asset, automaticallyLoadedAssetKeys: requiredAssetKeys)
+            p.replaceCurrentItem(with: playerItem)
+            self.onPositionChange();
+            /* setup lock screen controls */
+            setupRemoteTransportControls()
+            setupNowPlayingInfoPanel()
+        }
+        
     }
     
     private func onShowControlsFlagChanged() {
@@ -455,7 +484,7 @@ class VideoPlayer: NSObject, FlutterPlugin, FlutterStreamHandler, FlutterPlatfor
     
     private func updateInfoPanelOnPause() {
         
-        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = CMTimeGetSeconds((self.player?.currentTime())!)
+        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = CMTimeGetSeconds( (self.player?.currentTime())!)
         
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = 0
         
