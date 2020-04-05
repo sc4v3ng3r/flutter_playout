@@ -72,15 +72,16 @@ public class AudioPlayer implements MethodChannel.MethodCallHandler, EventChanne
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-
             mMediaNotificationManagerService = null;
         }
     };
+
     /* This service connection object is the bridge between activity and background service. */
     private ServiceConnection serviceConnection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            Log.i("DBG", "Service Connected");
 
             /* Cast and assign background service's onBind method returned iBinder object */
             audioServiceBinder = (AudioServiceBinder) iBinder;

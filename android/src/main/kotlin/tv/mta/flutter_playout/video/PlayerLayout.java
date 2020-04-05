@@ -26,7 +26,9 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.analytics.AnalyticsListener;
+import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.MediaSourceFactory;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
@@ -34,6 +36,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.upstream.RawResourceDataSource;
 import com.google.android.exoplayer2.util.Util;
 
 import org.json.JSONObject;
@@ -485,11 +488,13 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
         Uri uri = Uri.parse(url);
         String path = uri.getPath();
 
-        if( (path != null) && (path.endsWith(".m3u8") || path.endsWith("m3u")) ) {
+        if( (path.endsWith(".m3u8") || path.endsWith("m3u")) ) {
             videoSource = new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
-        } else {
+        }
+        else {
             videoSource = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
         }
+
 
         mPlayerView.prepare(videoSource);
     }
