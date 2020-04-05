@@ -59,6 +59,7 @@ public class AudioServiceBinder
     private boolean isBound = true;
 
     private boolean isMediaChanging = false;
+   // private Thread updateAudioProgressThread;
 
     /**
      * Whether the {@link MediaPlayer} broadcasted an error.
@@ -142,7 +143,7 @@ public class AudioServiceBinder
     }
 
     void startAudio(int startPositionInMills) {
-
+        isBound = true;
         this.startPositionInMills = startPositionInMills;
 
         initAudioPlayer();
@@ -198,15 +199,21 @@ public class AudioServiceBinder
 
             if (audioPlayer.isPlaying()) {
 
-                audioPlayer.stop();
+                audioPlayer.pause();
+                isBound = false;
             }
-
             audioPlayer.reset();
-
+            audioPlayer.setOnPreparedListener(null);
+            audioPlayer.setOnCompletionListener(null);
+            audioPlayer.setOnErrorListener(null);
+            audioPlayer.release();
             audioPlayer = null;
-
             updatePlaybackState(PlayerState.COMPLETE);
+
+            //this.audioProgressUpdateHandler = null;
         }
+        // stops the update thread
+        isBound = false;
     }
 
     void cleanPlayerNotification() {
@@ -224,7 +231,6 @@ public class AudioServiceBinder
         try {
 
             if (audioPlayer == null) {
-
                 audioPlayer = new MediaPlayer();
 
                 if (!TextUtils.isEmpty(getAudioFileUrl())) {
@@ -242,7 +248,6 @@ public class AudioServiceBinder
             }
 
             else {
-
                 audioPlayer.start();
             }
 
@@ -322,11 +327,10 @@ public class AudioServiceBinder
         updatePlaybackState(PlayerState.PLAYING);
 
         /* This thread object will send update audio progress message to caller activity every 1 second */
-        Thread updateAudioProgressThread = new Thread() {
+        Thread updateAudioProgressThread =  new Thread() {
 
             @Override
             public void run() {
-
                 while (isBound) {
 
                     try {
@@ -356,11 +360,11 @@ public class AudioServiceBinder
                             } catch (InterruptedException ex) { /* ignore */ }
                         }
 
+
                         // Create update audio duration message.
                         Message updateAudioDurationMsg = new Message();
 
                         updateAudioDurationMsg.what = UPDATE_AUDIO_DURATION;
-
                         // Send the message to caller activity's update audio progressbar Handler object.
                         audioProgressUpdateHandler.sendMessage(updateAudioDurationMsg);
 
@@ -369,6 +373,7 @@ public class AudioServiceBinder
                         Log.e(TAG, "onPrepared:updateAudioProgressThread: ", e);
                     }
                 }
+                Log.i(TAG, "UPDATE thread is dead");
             }
         };
 
@@ -380,9 +385,11 @@ public class AudioServiceBinder
 
         if (audioPlayer != null) {
 
-            audioPlayer.pause();
+            if (audioPlayer.isPlaying()) {
+                audioPlayer.stop();
+                updatePlaybackState(PlayerState.PAUSED);
+            }
 
-            updatePlaybackState(PlayerState.PAUSED);
 
             // Create update audio player state message.
             Message updateAudioProgressMsg = new Message();
@@ -391,6 +398,7 @@ public class AudioServiceBinder
 
             // Send the message to caller activity's update audio Handler object.
             audioProgressUpdateHandler.sendMessage(updateAudioProgressMsg);
+            isBound = false;
         }
     }
 
@@ -501,6 +509,7 @@ public class AudioServiceBinder
         long capabilities = 0;
 
         switch (playerState) {
+            case BUFFERING:
             case PLAYING:
                 capabilities |= PlaybackStateCompat.ACTION_PAUSE
                         | PlaybackStateCompat.ACTION_STOP;
@@ -509,10 +518,10 @@ public class AudioServiceBinder
                 capabilities |= PlaybackStateCompat.ACTION_PLAY
                         | PlaybackStateCompat.ACTION_STOP;
                 break;
-            case BUFFERING:
-                capabilities |= PlaybackStateCompat.ACTION_PAUSE
-                        | PlaybackStateCompat.ACTION_STOP;
-                break;
+//            case BUFFERING:
+//                capabilities |= PlaybackStateCompat.ACTION_PAUSE
+//                        | PlaybackStateCompat.ACTION_STOP;
+//                break;
             case IDLE:
                 if (!mReceivedError) {
                     capabilities |= PlaybackStateCompat.ACTION_PLAY;
@@ -581,6 +590,7 @@ public class AudioServiceBinder
      * A {@link android.support.v4.media.session.MediaSessionCompat.Callback} implementation for MediaPlayer.
      */
     private final class MediaSessionCallback extends MediaSessionCompat.Callback {
+
 
         MediaSessionCallback(MediaPlayer player) {
             audioPlayer = player;
