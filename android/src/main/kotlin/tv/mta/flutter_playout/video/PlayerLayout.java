@@ -77,6 +77,7 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
      * The underlying {@link MediaSessionCompat}.
      */
     private MediaSessionCompat mMediaSessionCompat;
+
     /**
      * An instance of Flutter event sink
      */
@@ -247,7 +248,7 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
         /* Create a new MediaSession */
         mMediaSessionCompat = new MediaSessionCompat(context,
                 PlayerLayout.class.getSimpleName(), receiver, null);
-
+        mMediaSessionCompat.setMediaButtonReceiver( null );
         mMediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
                 | MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS);
 
@@ -255,20 +256,23 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
 
         mMediaSessionCompat.setActive(true);
 
+
+
         setAudioMetadata();
 
         updatePlaybackState(PlayerState.PLAYING);
     }
 
     private void setAudioMetadata() {
+        if (mMediaSessionCompat != null) {
+            MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
+                    .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, title)
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+                    .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, subtitle)
+                    .build();
 
-        MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, title)
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, subtitle)
-                .build();
-
-        mMediaSessionCompat.setMetadata(metadata);
+            mMediaSessionCompat.setMetadata(metadata);
+        }
     }
 
     private PlaybackStateCompat.Builder getPlaybackStateBuilder() {
@@ -289,9 +293,10 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
         long capabilities = getCapabilities(playerState);
 
         newPlaybackState.setActions(capabilities);
-
         int playbackStateCompat = PlaybackStateCompat.STATE_NONE;
 
+        if ( !mMediaSessionCompat.isActive() )
+            mMediaSessionCompat.setActive(true);
         switch (playerState) {
             case PLAYING:
                 playbackStateCompat = PlaybackStateCompat.STATE_PLAYING;
@@ -304,6 +309,7 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
                 break;
             case IDLE:
                 playbackStateCompat = PlaybackStateCompat.STATE_STOPPED;
+                mMediaSessionCompat.setActive(false);
                 break;
         }
         newPlaybackState.setState(playbackStateCompat, (long) mPlayerView.getCurrentPosition(), PLAYBACK_RATE);
@@ -608,6 +614,7 @@ public class PlayerLayout extends PlayerView implements FlutterAVPlayer, EventCh
             isBound = false;
 
             mPlayerView.stop(true);
+            mMediaSessionCompat.setActive(false);
 
             mPlayerView.release();
 

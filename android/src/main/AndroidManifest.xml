@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application>
+        <!--
         <service android:name=".audio.AudioService"
             android:enabled="true"
             android:exported="false"
@@ -21,12 +22,14 @@
             android:stopWithTask="false">
         </service>
 
+
         <receiver
             android:name=".audio.RemoteReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+        -->
 
         <receiver
             android:name=".video.RemoteReceiver" >
@@ -34,5 +37,6 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+
     </application>
 </manifest>

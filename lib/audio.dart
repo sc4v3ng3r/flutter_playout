@@ -7,12 +7,12 @@ class Audio {
 
   Audio._();
 
-  static Audio _instance;
+  //static Audio _instance;
   static Audio instance() {
-    if (_instance == null) {
-      _instance = Audio._();
-    }
-    return _instance;
+    // if (_instance == null) {
+    //   _instance = Audio._();
+    // }
+    // return _instance;
   }
 
   String _url;
@@ -33,52 +33,54 @@ class Audio {
       String subtitle = "",
       Duration position = Duration.zero,
       bool isLiveStream = false}) async {
-    if ( _hasDataChanged(url, title, subtitle, position, isLiveStream) || _isReset) {
-      this._isReset = false;
-      this._url = url;
-      this._title = title;
-      this._subtitle = subtitle;
-      this._position = position;
-      this._isLiveStream = isLiveStream;
+        return Future.value();
+    // if ( _hasDataChanged(url, title, subtitle, position, isLiveStream) || _isReset) {
+    //   this._isReset = false;
+    //   this._url = url;
+    //   this._title = title;
+    //   this._subtitle = subtitle;
+    //   this._position = position;
+    //   this._isLiveStream = isLiveStream;
       
-      return _audioChannel.invokeMethod("play", <String, dynamic>{
-        "url": url,
-        "title": title,
-        "subtitle": subtitle,
-        "position": position.inMilliseconds,
-        "isLiveStream": isLiveStream,
-      });
-    }
+    //   return _audioChannel.invokeMethod("play", <String, dynamic>{
+    //     "url": url,
+    //     "title": title,
+    //     "subtitle": subtitle,
+    //     "position": position.inMilliseconds,
+    //     "isLiveStream": isLiveStream,
+    //   });
+    // }
   }
 
   bool _hasDataChanged(String url, String title, String subtitle,
       Duration position, bool isLiveStream) {
-    var results = this._url != url ||
-        this._title != title ||
-        this._subtitle != subtitle ||
-        this._position != position ||
-        this._isLiveStream != isLiveStream;
-        return results;
+    // var results = this._url != url ||
+    //     this._title != title ||
+    //     this._subtitle != subtitle ||
+    //     this._position != position ||
+    //     this._isLiveStream != isLiveStream;
+    //     return results;
+    return false;
   }
 
   Future<void> pause() async {
-    return _audioChannel.invokeMethod("pause");
+    // return _audioChannel.invokeMethod("pause");
   }
 
   Future<void> reset() async {
-    this._isReset = true;
-    return _audioChannel.invokeMethod("reset");
+    // this._isReset = true;
+    // return _audioChannel.invokeMethod("reset");
 
   }
 
   Future<void> seekTo(double seconds) async {
-    return _audioChannel.invokeMethod("seekTo", <String, dynamic>{
-      "second": seconds,
-    });
+    // return _audioChannel.invokeMethod("seekTo", <String, dynamic>{
+    //   "second": seconds,
+    // });
   }
 
   Future<void> dispose() async {
-    _instance = null;
-    await _audioChannel.invokeMethod("dispose");
+    // _instance = null;
+    // await _audioChannel.invokeMethod("dispose");
   }
 }

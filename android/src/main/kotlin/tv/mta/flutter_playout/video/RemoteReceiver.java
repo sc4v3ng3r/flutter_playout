@@ -3,6 +3,7 @@ package tv.mta.flutter_playout.video;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.KeyEvent;
 
 public class RemoteReceiver extends BroadcastReceiver {
@@ -20,13 +21,13 @@ public class RemoteReceiver extends BroadcastReceiver {
                     switch (event.getKeyCode()) {
 
                         case KeyEvent.KEYCODE_MEDIA_PAUSE:
-
+                            Log.i("DBG", "RemoteReceiver KEY PAUSE");
                             PlayerLayout.activePlayer.setPlayWhenReady(false);
 
                             break;
 
                         case KeyEvent.KEYCODE_MEDIA_PLAY:
-
+                            Log.i("DBG", "RemoteReceiver KEY PLAY");
                             PlayerLayout.activePlayer.setPlayWhenReady(true);
 
                             break;

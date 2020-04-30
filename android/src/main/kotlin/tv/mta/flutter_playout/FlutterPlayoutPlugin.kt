@@ -9,7 +9,7 @@ class FlutterPlayoutPlugin {
     @JvmStatic
     fun registerWith(registrar: Registrar) {
       PlayerViewFactory.registerWith(registrar)
-      AudioPlayer.registerWith(registrar)
+      //AudioPlayer.registerWith(registrar)
     }
   }
 }
